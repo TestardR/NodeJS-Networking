@@ -2,18 +2,31 @@ const server = require('net').createServer();
 let counter = 0;
 let sockets = {};
 
+function timestamp() {
+  const now = new Date();
+  return `${now.getHours()}:${now.getMinutes()}`;
+}
+
 // event emitter that fires every time a client connects to the server
 // socket is an Event Emitter we can use
 server.on('connection', socket => {
   socket.id = counter++;
-  sockets[socket.id] = socket;
 
   console.log('Client connected');
-  socket.write('Welcome new client!\n');
+  socket.write('Please type your name: ');
 
   socket.on('data', data => {
-    Object.entries(sockets).forEach(([, cs]) => {
-      cs.write(`${socket.id}: `);
+    if (!sockets[socket.id]) {
+      socket.name = data.toString().trim();
+      socket.write(`Welcome ${socket.name}!\n`);
+      sockets[socket.id] = socket;
+      return;
+    }
+    Object.entries(sockets).forEach(([key, cs]) => {
+      if (socket.id == key) {
+        return;
+      }
+      cs.write(`${socket.name} ${timestamp()}: `);
       cs.write(data);
     });
   });
